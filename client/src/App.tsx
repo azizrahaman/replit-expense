@@ -8,6 +8,7 @@ import Accounts from "@/pages/Accounts";
 import Transactions from "@/pages/Transactions";
 import Reports from "@/pages/Reports";
 import Categories from "@/pages/Categories";
+import Settings from "@/pages/Settings";
 import AddTransaction from "@/pages/AddTransaction";
 import Sidebar from "@/components/Sidebar";
 import MobileNav from "@/components/MobileNav";
@@ -48,10 +49,15 @@ function AppContent() {
           <Switch>
             <Route path="/" component={AddTransaction} />
             <Route path="/dashboard" component={Dashboard} />
-            <Route path="/accounts" component={Accounts} />
+            <Route path="/accounts">
+              {(params) => <Accounts />}
+            </Route>
             <Route path="/transactions" component={Transactions} />
             <Route path="/reports" component={Reports} />
-            <Route path="/categories" component={Categories} />
+            <Route path="/categories">
+              {(params) => <Categories />}
+            </Route>
+            <Route path="/settings" component={Settings} />
             <Route component={NotFound} />
           </Switch>
         </main>

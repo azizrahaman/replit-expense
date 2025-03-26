@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, CreditCard, PlusCircle, BarChart3, Menu } from "lucide-react";
+import { Home, PlusCircle, BarChart3, Settings } from "lucide-react";
 
 export default function MobileNav() {
   const [location, setLocation] = useLocation();
@@ -13,21 +13,15 @@ export default function MobileNav() {
       exact: true
     },
     {
-      name: "Accounts",
-      href: "/accounts",
-      icon: CreditCard,
-      exact: false
-    },
-    {
       name: "Reports",
       href: "/reports",
       icon: BarChart3,
       exact: false
     },
     {
-      name: "More",
-      href: "/categories",
-      icon: Menu,
+      name: "Settings",
+      href: "/settings",
+      icon: Settings,
       exact: false
     }
   ];

@@ -2,12 +2,12 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { 
   Home,
-  CreditCard,
+  PlusCircle,
   DollarSign,
   BarChart3,
-  FolderClosed,
   Settings,
-  X
+  X,
+  Receipt
 } from "lucide-react";
 
 interface SidebarProps {
@@ -22,7 +22,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     {
       name: "Add Transaction",
       href: "/",
-      icon: DollarSign,
+      icon: PlusCircle,
       exact: true
     },
     {
@@ -32,15 +32,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       exact: true
     },
     {
-      name: "Accounts",
-      href: "/accounts",
-      icon: CreditCard,
-      exact: false
-    },
-    {
       name: "Transactions",
       href: "/transactions",
-      icon: DollarSign,
+      icon: Receipt,
       exact: false
     },
     {
@@ -50,9 +44,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       exact: false
     },
     {
-      name: "Categories",
-      href: "/categories",
-      icon: FolderClosed,
+      name: "Settings",
+      href: "/settings",
+      icon: Settings,
       exact: false
     }
   ];
@@ -77,7 +71,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
       >
         <div className="px-6 pt-6 pb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center">
+          <h1 className="text-xl font-bold text-gray-800 flex items-center">
             <DollarSign className="h-6 w-6 mr-2 text-primary" />
             Finance Tracker
           </h1>

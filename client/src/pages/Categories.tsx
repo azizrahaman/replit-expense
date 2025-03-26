@@ -19,7 +19,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export default function Categories() {
+interface CategoriesProps {
+  hideHeader?: boolean;
+}
+
+export default function Categories({ hideHeader = false }: CategoriesProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("income");
@@ -130,12 +134,12 @@ export default function Categories() {
 
     if (!categories || categories.length === 0) {
       return (
-        <div className="text-center py-10">
+        <div className="text-center py-6">
           <h3 className="mt-2 text-sm font-medium text-gray-900">No categories</h3>
           <p className="mt-1 text-sm text-gray-500">
             Get started by creating a new category.
           </p>
-          <div className="mt-6">
+          <div className="mt-4">
             <Button onClick={handleAddNewCategory}>
               <Plus className="mr-2 h-5 w-5" />
               Add Category
@@ -148,14 +152,14 @@ export default function Categories() {
     return (
       <div className="divide-y divide-gray-200">
         {categories.map((category) => (
-          <div key={category.id} className="py-4 flex justify-between items-center">
+          <div key={category.id} className="py-3 flex justify-between items-center">
             <div>
-              <h4 className="text-lg font-medium text-gray-900">{category.name}</h4>
+              <h4 className="text-base font-medium text-gray-900">{category.name}</h4>
               {category.description && (
                 <p className="text-sm text-gray-500">{category.description}</p>
               )}
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-1">
               <Button 
                 variant="ghost" 
                 size="icon"
@@ -178,30 +182,41 @@ export default function Categories() {
   };
 
   return (
-    <div className="py-6 px-4 sm:px-6 lg:px-8">
+    <div className={hideHeader ? "" : "py-6 px-4 sm:px-6 lg:px-8"}>
       {/* Page header */}
-      <div className="md:flex md:items-center md:justify-between mb-6">
-        <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold text-gray-800">Categories</h2>
+      {!hideHeader && (
+        <div className="md:flex md:items-center md:justify-between mb-6">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-2xl font-bold text-gray-800">Categories</h2>
+          </div>
+          <div className="mt-4 flex md:mt-0 md:ml-4">
+            <Button onClick={handleAddNewCategory}>
+              <Plus className="mr-2 h-5 w-5" />
+              Add Category
+            </Button>
+          </div>
         </div>
-        <div className="mt-4 flex md:mt-0 md:ml-4">
-          <Button onClick={handleAddNewCategory}>
-            <Plus className="mr-2 h-5 w-5" />
-            Add Category
-          </Button>
-        </div>
-      </div>
+      )}
 
       {/* Tabs for Income and Expense Categories */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 mb-6">
-          <TabsTrigger value="income">Income Categories</TabsTrigger>
-          <TabsTrigger value="expense">Expense Categories</TabsTrigger>
+        <TabsList className="grid grid-cols-2 mb-4">
+          <TabsTrigger value="income" className="text-sm">Income Categories</TabsTrigger>
+          <TabsTrigger value="expense" className="text-sm">Expense Categories</TabsTrigger>
         </TabsList>
+        
+        <div className="flex justify-end mb-2">
+          {hideHeader && (
+            <Button onClick={handleAddNewCategory} size="sm">
+              <Plus className="mr-1 h-4 w-4" />
+              Add Category
+            </Button>
+          )}
+        </div>
         
         <TabsContent value="income">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               {renderCategoryList(incomeQuery.data || [], incomeQuery.isLoading)}
             </CardContent>
           </Card>
@@ -209,7 +224,7 @@ export default function Categories() {
         
         <TabsContent value="expense">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               {renderCategoryList(expenseQuery.data || [], expenseQuery.isLoading)}
             </CardContent>
           </Card>

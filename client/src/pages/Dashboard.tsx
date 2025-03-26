@@ -18,10 +18,12 @@ import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
 import TransactionModal from "@/components/TransactionModal";
 import AccountCard from "@/components/AccountCard";
 import TransactionItem from "@/components/TransactionItem";
+import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
   const { toast } = useToast();
+  const [_, setLocation] = useLocation();
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<string>("this_month");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -127,7 +129,7 @@ export default function Dashboard() {
           <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
         </div>
         <div className="mt-4 flex md:mt-0 md:ml-4">
-          <Button onClick={() => setIsTransactionModalOpen(true)}>
+          <Button onClick={() => setLocation("/")}>
             <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
@@ -333,12 +335,7 @@ export default function Dashboard() {
                   <Button 
                     size="icon" 
                     variant="outline" 
-                    onClick={() => {
-                      toast({
-                        title: "Coming soon!",
-                        description: "Visit the Accounts page to add a new account.",
-                      });
-                    }}
+                    onClick={() => setLocation("/settings")}
                   >
                     <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

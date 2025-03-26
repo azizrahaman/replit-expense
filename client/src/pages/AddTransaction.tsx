@@ -144,9 +144,9 @@ export default function AddTransaction() {
   }
 
   return (
-    <div className="py-6 px-4 sm:px-6 lg:px-8">
+    <div className="py-2 px-3 sm:px-4">
       {/* Page header */}
-      <div className="mb-6 flex items-center">
+      <div className="mb-3 flex items-center">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -159,7 +159,7 @@ export default function AddTransaction() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {/* Transaction Type Selection */}
           <FormField
             control={form.control}
@@ -281,9 +281,9 @@ export default function AddTransaction() {
           />
 
           {/* Account Selection */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <FormLabel>Account</FormLabel>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-3 gap-2">
               {accounts.map((account) => (
                 <Card 
                   key={account.id} 
@@ -295,24 +295,24 @@ export default function AddTransaction() {
                   )}
                   onClick={() => setSelectedAccountId(account.id)}
                 >
-                  <CardContent className="p-4 text-center">
-                    <p className="font-medium">{account.name}</p>
-                    <p className="text-sm text-gray-500">${account.balance.toFixed(2)}</p>
+                  <CardContent className="p-2 text-center">
+                    <p className="font-medium text-sm">{account.name}</p>
+                    <p className="text-xs text-gray-500">${account.balance.toFixed(2)}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
             {accounts.length === 0 && (
-              <p className="text-center py-4 text-sm text-gray-500">
+              <p className="text-center py-2 text-sm text-gray-500">
                 No accounts found. Please add an account first.
               </p>
             )}
           </div>
 
           {/* Category Selection */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <FormLabel>Category</FormLabel>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-3 gap-2">
               {(transactionType === "income" ? incomeCategories : expenseCategories).map((category) => (
                 <Card 
                   key={category.id} 
@@ -324,14 +324,14 @@ export default function AddTransaction() {
                   )}
                   onClick={() => setSelectedCategoryId(category.id)}
                 >
-                  <CardContent className="p-4 text-center">
-                    <p className="font-medium">{category.name}</p>
+                  <CardContent className="p-2 text-center">
+                    <p className="font-medium text-sm">{category.name}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
             {((transactionType === "income" ? incomeCategories : expenseCategories).length === 0) && (
-              <p className="text-center py-4 text-sm text-gray-500">
+              <p className="text-center py-2 text-sm text-gray-500">
                 No categories found. Please add a category first.
               </p>
             )}
