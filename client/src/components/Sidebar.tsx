@@ -20,8 +20,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const navItems = [
     {
-      name: "Dashboard",
+      name: "Add Transaction",
       href: "/",
+      icon: DollarSign,
+      exact: true
+    },
+    {
+      name: "Dashboard",
+      href: "/dashboard",
       icon: Home,
       exact: true
     },
@@ -47,12 +53,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       name: "Categories",
       href: "/categories",
       icon: FolderClosed,
-      exact: false
-    },
-    {
-      name: "Settings",
-      href: "/settings",
-      icon: Settings,
       exact: false
     }
   ];

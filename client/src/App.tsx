@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,6 +8,7 @@ import Accounts from "@/pages/Accounts";
 import Transactions from "@/pages/Transactions";
 import Reports from "@/pages/Reports";
 import Categories from "@/pages/Categories";
+import AddTransaction from "@/pages/AddTransaction";
 import Sidebar from "@/components/Sidebar";
 import MobileNav from "@/components/MobileNav";
 import { useState } from "react";
@@ -45,7 +46,8 @@ function AppContent() {
         {/* Main content */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none pb-16 md:pb-0">
           <Switch>
-            <Route path="/" component={Dashboard} />
+            <Route path="/" component={AddTransaction} />
+            <Route path="/dashboard" component={Dashboard} />
             <Route path="/accounts" component={Accounts} />
             <Route path="/transactions" component={Transactions} />
             <Route path="/reports" component={Reports} />
