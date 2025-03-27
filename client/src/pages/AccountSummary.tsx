@@ -41,12 +41,19 @@ export default function AccountSummary() {
   
   // Fetch all transactions with details
   const transactionsQuery = useQuery({
-    queryKey: ["/api/transactions", timePeriod, dateRange],
+    queryKey: ["/api/transactions"],
     queryFn: async () => {
-      // First get all transactions
+      // Get all transactions with details
       const res = await fetch("/api/transactions");
       if (!res.ok) throw new Error("Failed to fetch transactions");
-      return res.json();
+      
+      // Convert account_id and category_id to accountId and categoryId for consistency
+      const transactions = await res.json();
+      return transactions.map((t: any) => ({
+        ...t,
+        accountId: t.accountId || t.account_id, // Use accountId if it exists, otherwise use account_id
+        categoryId: t.categoryId || t.category_id // Use categoryId if it exists, otherwise use category_id
+      }));
     },
     enabled: !!accountsQuery.data
   });
@@ -57,29 +64,30 @@ export default function AccountSummary() {
 
     // Determine date range based on time period
     let startDate: Date, endDate = new Date();
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
     
     switch (timePeriod) {
       case "this_week":
-        const today = new Date();
-        const day = today.getDay();
-        startDate = new Date(today);
-        startDate.setDate(today.getDate() - day); // Start of week (Sunday)
+        const day = currentDate.getDay();
+        startDate = new Date(currentDate);
+        startDate.setDate(currentDate.getDate() - day); // Start of week (Sunday)
         break;
       case "this_month":
-        startDate = new Date();
-        startDate.setDate(1); // Start of current month
+        startDate = new Date(currentYear, currentMonth, 1); // Start of current month
+        endDate = new Date(currentYear, currentMonth + 1, 0); // End of current month
         break;
       case "last_month":
-        startDate = new Date();
-        startDate.setMonth(startDate.getMonth() - 1);
-        startDate.setDate(1); // Start of last month
-        endDate = new Date();
-        endDate.setDate(0); // End of last month
+        // For last month, we need to be careful about January
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        startDate = new Date(lastMonthYear, lastMonth, 1); // Start of last month
+        endDate = new Date(lastMonthYear, lastMonth + 1, 0); // End of last month
         break;
       case "this_year":
-        startDate = new Date();
-        startDate.setMonth(0);
-        startDate.setDate(1); // Start of current year
+        startDate = new Date(currentYear, 0, 1); // January 1st of current year
+        endDate = new Date(currentYear, 11, 31); // December 31st of current year
         break;
       case "custom":
         if (dateRange?.from && dateRange?.to) {
@@ -90,15 +98,35 @@ export default function AccountSummary() {
         }
         break;
       default:
-        startDate = new Date();
-        startDate.setDate(1); // Default to start of current month
+        startDate = new Date(currentYear, currentMonth, 1); // Default to start of current month
+        endDate = new Date(currentYear, currentMonth + 1, 0); // End of current month
     }
+
+    // Set time to beginning of day for startDate and end of day for endDate
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    console.log('Date range:', {
+      timePeriod,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString()
+    });
 
     // Filter transactions by date range
     const filteredTransactions = transactionsQuery.data.filter((transaction: TransactionWithDetails) => {
       const transactionDate = new Date(transaction.date);
+      transactionDate.setHours(0, 0, 0, 0); // Normalize to beginning of day for comparison
+      
       return transactionDate >= startDate && transactionDate <= endDate;
     });
+
+    console.log('Filtered transactions:', filteredTransactions.map((t: TransactionWithDetails) => ({
+      id: t.id,
+      amount: t.amount,
+      type: t.type,
+      date: t.date,
+      accountId: t.accountId
+    })));
 
     // Create a map of account summaries
     const summaries = accountsQuery.data.map((account: any) => {
