@@ -38,6 +38,11 @@ export default function Transactions() {
   // Fetch transactions
   const { data: transactions, isLoading, error } = useQuery({
     queryKey: ["/api/transactions"],
+    queryFn: async () => {
+      const res = await fetch("/api/transactions");
+      if (!res.ok) throw new Error("Failed to fetch transactions");
+      return res.json();
+    }
   });
 
   // Fetch accounts for filter
@@ -56,10 +61,14 @@ export default function Transactions() {
 
   // Filter transactions based on selected filters
   const filteredTransactions = transactions?.filter((transaction) => {
-    let matchesAccount = accountFilter === "all" || transaction.accountId?.toString() === accountFilter;
+    // Check if transaction matches the account filter
+    let matchesAccount = accountFilter === "all" || 
+      (transaction.account_id && transaction.account_id.toString() === accountFilter);
+    
+    // Check if transaction matches the category filter
     let matchesCategory = categoryFilter === "all" || 
-      (transaction.categoryId !== null && transaction.categoryId !== undefined && 
-       transaction.categoryId.toString() === categoryFilter);
+      (transaction.category_id && transaction.category_id.toString() === categoryFilter);
+    
     return matchesAccount && matchesCategory;
   }) || [];
 
