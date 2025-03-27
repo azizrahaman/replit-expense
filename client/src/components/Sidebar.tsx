@@ -7,7 +7,8 @@ import {
   BarChart3,
   Settings,
   X,
-  Receipt
+  Receipt,
+  CreditCard
 } from "lucide-react";
 
 interface SidebarProps {
@@ -35,6 +36,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       name: "Transactions",
       href: "/transactions",
       icon: Receipt,
+      exact: false
+    },
+    {
+      name: "Account Summary",
+      href: "/account-summary",
+      icon: CreditCard,
       exact: false
     },
     {

@@ -9,9 +9,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
+
+
+
 import {
   Select,
   SelectContent,
@@ -133,20 +133,7 @@ export default function Reports() {
   const INCOME_COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#3B82F6'];
   const EXPENSE_COLORS = ['#EF4444', '#F59E0B', '#EC4899', '#6B7280', '#8B5CF6'];
   
-  // Fetch accounts for the account summary tab
-  const accountsQuery = useQuery({
-    queryKey: ["/api/accounts"],
-    queryFn: async () => {
-      const res = await fetch("/api/accounts");
-      if (!res.ok) throw new Error("Failed to fetch accounts");
-      return res.json();
-    }
-  });
-  
-  // Navigate to account transactions page
-  const navigateToAccountTransactions = (accountId: number) => {
-    setLocation(`/account-transactions/${accountId}`);
-  };
+
 
   // Handle period change
   const handlePeriodChange = (value: string) => {
@@ -259,16 +246,10 @@ export default function Reports() {
               Income Breakdown
             </div>
             <div 
-              className={`p-3 rounded-md mb-1 cursor-pointer font-medium ${activeTab === "expense-categories" ? "bg-primary text-white" : "hover:bg-gray-100"}`}
+              className={`p-3 rounded-md cursor-pointer font-medium ${activeTab === "expense-categories" ? "bg-primary text-white" : "hover:bg-gray-100"}`}
               onClick={() => setActiveTab("expense-categories")}
             >
               Expense Breakdown
-            </div>
-            <div 
-              className={`p-3 rounded-md cursor-pointer font-medium ${activeTab === "account-summary" ? "bg-primary text-white" : "hover:bg-gray-100"}`}
-              onClick={() => setActiveTab("account-summary")}
-            >
-              Account Summary
             </div>
           </div>
         </div>
@@ -404,74 +385,7 @@ export default function Reports() {
             </Card>
           )}
 
-          {/* Account Summary Tab Content */}
-          {activeTab === "account-summary" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {accountsQuery.isLoading ? (
-                  <div className="space-y-3">
-                    {[...Array(3)].map((_, index) => (
-                      <Skeleton key={index} className="h-20 w-full" />
-                    ))}
-                  </div>
-                ) : accountsQuery.data?.length === 0 ? (
-                  <div className="text-center py-10">
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No accounts found</h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      You need to add accounts to see account summaries.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Account</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Income</TableHead>
-                          <TableHead>Expenses</TableHead>
-                          <TableHead>Balance</TableHead>
-                          <TableHead className="text-right">Details</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {accountsQuery.data?.map((account: any) => (
-                          <TableRow 
-                            key={account.id} 
-                            className="cursor-pointer hover:bg-gray-50"
-                          >
-                            <TableCell className="font-medium">{account.name}</TableCell>
-                            <TableCell className="capitalize">{account.type}</TableCell>
-                            <TableCell className="text-green-600">
-                              ${(account.income || 0).toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-red-500">
-                              ${(account.expense || 0).toFixed(2)}
-                            </TableCell>
-                            <TableCell className="font-semibold">
-                              ${account.balance.toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigateToAccountTransactions(account.id)}
-                              >
-                                View <ChevronRight className="ml-1 h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+
         </div>
       </div>
     </div>

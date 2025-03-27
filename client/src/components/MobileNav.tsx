@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, PlusCircle, BarChart3, Settings, Menu } from "lucide-react";
+import { Home, PlusCircle, BarChart3, Settings, Menu, CreditCard } from "lucide-react";
 
 interface MobileNavProps {
   toggleSidebar: () => void;
@@ -15,6 +15,12 @@ export default function MobileNav({ toggleSidebar }: MobileNavProps) {
       href: "/dashboard",
       icon: Home,
       exact: true
+    },
+    {
+      name: "Accounts",
+      href: "/account-summary",
+      icon: CreditCard,
+      exact: false
     },
     {
       name: "Reports",
