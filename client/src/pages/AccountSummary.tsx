@@ -40,6 +40,8 @@ export default function AccountSummary() {
   
   // Navigate to account transactions page
   const navigateToAccountTransactions = (accountId: number) => {
+    // Store the current location before navigating
+    sessionStorage.setItem("prevLocation", "/account-summary");
     setLocation(`/account-transactions/${accountId}`);
   };
 

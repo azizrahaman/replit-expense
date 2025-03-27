@@ -38,9 +38,23 @@ export default function AccountTransactions() {
     enabled: !!accountId
   });
 
+  // Store previous location to handle back navigation
+  const [previousLocation, setPreviousLocation] = useState<string>("/account-summary");
+  
+  // Get the previous location from sessionStorage if possible
+  useEffect(() => {
+    const storedPrevLocation = sessionStorage.getItem("prevLocation");
+    if (storedPrevLocation) {
+      setPreviousLocation(storedPrevLocation);
+      // Clear it after retrieving
+      sessionStorage.removeItem("prevLocation");
+    }
+  }, []);
+  
   // Handle back button
   const handleBack = () => {
-    setLocation("/reports");
+    // Navigate to the remembered location or default to account summary
+    setLocation(previousLocation || "/account-summary");
   };
 
   return (
