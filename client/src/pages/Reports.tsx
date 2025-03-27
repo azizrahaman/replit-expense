@@ -3,12 +3,16 @@ import { format, subMonths } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { ChevronRight } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -19,6 +23,7 @@ import {
 
 export default function Reports() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("income-expense");
   const [timePeriod, setTimePeriod] = useState("this_month");
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -128,6 +133,21 @@ export default function Reports() {
   // Colors for pie charts
   const INCOME_COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#3B82F6'];
   const EXPENSE_COLORS = ['#EF4444', '#F59E0B', '#EC4899', '#6B7280', '#8B5CF6'];
+  
+  // Fetch accounts for the account summary tab
+  const accountsQuery = useQuery({
+    queryKey: ["/api/accounts"],
+    queryFn: async () => {
+      const res = await fetch("/api/accounts");
+      if (!res.ok) throw new Error("Failed to fetch accounts");
+      return res.json();
+    }
+  });
+  
+  // Navigate to account transactions page
+  const navigateToAccountTransactions = (accountId: number) => {
+    setLocation(`/account-transactions/${accountId}`);
+  };
 
   // Handle period change
   const handlePeriodChange = (value: string) => {
@@ -229,10 +249,11 @@ export default function Reports() {
         onValueChange={setActiveTab} 
         className="mb-6"
       >
-        <TabsList className="grid grid-cols-3 mb-4">
+        <TabsList className="grid grid-cols-4 mb-4">
           <TabsTrigger value="income-expense">Income vs Expenses</TabsTrigger>
           <TabsTrigger value="income-categories">Income Breakdown</TabsTrigger>
           <TabsTrigger value="expense-categories">Expense Breakdown</TabsTrigger>
+          <TabsTrigger value="account-summary">Account Summary</TabsTrigger>
         </TabsList>
         
         <TabsContent value="income-expense">
@@ -252,16 +273,16 @@ export default function Reports() {
                       data={formatMonthlyData()}
                       margin={{
                         top: 20,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
+                        right: 50,
+                        left: 30,
+                        bottom: 20,
                       }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
-                      <Legend />
+                      <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
+                      <Legend wrapperStyle={{ paddingTop: 10 }} />
                       <Bar dataKey="income" name="Income" fill="#10B981" />
                       <Bar dataKey="expense" name="Expenses" fill="#EF4444" />
                       <Bar dataKey="savings" name="Savings" fill="#3B82F6" />
@@ -293,14 +314,14 @@ export default function Reports() {
               ) : (
                 <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart margin={{ top: 20, right: 50, bottom: 20, left: 50 }}>
                       <Pie
                         data={formatCategoryData(incomeByCategoryQuery.data)}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={150}
+                        outerRadius={130}
                         fill="#8884d8"
                         dataKey="value"
                       >
@@ -308,7 +329,7 @@ export default function Reports() {
                           <Cell key={`cell-${index}`} fill={INCOME_COLORS[index % INCOME_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                      <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -337,14 +358,14 @@ export default function Reports() {
               ) : (
                 <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart margin={{ top: 20, right: 50, bottom: 20, left: 50 }}>
                       <Pie
                         data={formatCategoryData(expenseByCategoryQuery.data)}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={150}
+                        outerRadius={130}
                         fill="#8884d8"
                         dataKey="value"
                       >
@@ -352,9 +373,80 @@ export default function Reports() {
                           <Cell key={`cell-${index}`} fill={EXPENSE_COLORS[index % EXPENSE_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                      <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
                     </PieChart>
                   </ResponsiveContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Account Summary Tab */}
+        <TabsContent value="account-summary">
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {accountsQuery.isLoading ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, index) => (
+                    <Skeleton key={index} className="h-20 w-full" />
+                  ))}
+                </div>
+              ) : accountsQuery.data?.length === 0 ? (
+                <div className="text-center py-10">
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No accounts found</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    You need to add accounts to see account summaries.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Account</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Income</TableHead>
+                        <TableHead>Expenses</TableHead>
+                        <TableHead>Balance</TableHead>
+                        <TableHead className="text-right">Details</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {accountsQuery.data?.map((account: any) => (
+                        <TableRow 
+                          key={account.id} 
+                          className="cursor-pointer hover:bg-gray-50"
+                        >
+                          <TableCell className="font-medium">{account.name}</TableCell>
+                          <TableCell className="capitalize">{account.type}</TableCell>
+                          <TableCell className="text-green-600">
+                            {/* Show account income calculation here */}
+                            ${(account.income || 0).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-red-500">
+                            {/* Show account expense calculation here */}
+                            ${(account.expense || 0).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="font-semibold">
+                            ${account.balance.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigateToAccountTransactions(account.id)}
+                            >
+                              View <ChevronRight className="ml-1 h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </CardContent>

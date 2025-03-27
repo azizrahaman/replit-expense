@@ -10,6 +10,7 @@ import Reports from "@/pages/Reports";
 import Categories from "@/pages/Categories";
 import Settings from "@/pages/Settings";
 import AddTransaction from "@/pages/AddTransaction";
+import AccountTransactions from "@/pages/AccountTransactions";
 import Sidebar from "@/components/Sidebar";
 import MobileNav from "@/components/MobileNav";
 import { useState } from "react";
@@ -41,6 +42,7 @@ function AppContent() {
               {(params) => <Categories />}
             </Route>
             <Route path="/settings" component={Settings} />
+            <Route path="/account-transactions/:accountId" component={AccountTransactions} />
             <Route component={NotFound} />
           </Switch>
         </main>
