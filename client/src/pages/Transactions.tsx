@@ -1,10 +1,30 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { 
+  format, 
+  startOfMonth, 
+  endOfMonth, 
+  startOfWeek, 
+  endOfWeek, 
+  subMonths, 
+  subWeeks,
+  isAfter,
+  isBefore,
+  parseISO 
+} from "date-fns";
+import { Calendar as CalendarIcon, Plus, Filter } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -31,10 +51,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Filter } from "lucide-react";
+import { DateRange } from "@shared/schema";
 import TransactionItem from "@/components/TransactionItem";
 import TransactionModal from "@/components/TransactionModal";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Transactions() {
   const { toast } = useToast();
@@ -43,7 +62,44 @@ export default function Transactions() {
   const [accountFilter, setAccountFilter] = useState("all");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState<string>("all");
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
   const itemsPerPage = 10;
+  
+  // Time period utility functions
+  const getDateRange = () => {
+    const now = new Date();
+    
+    switch (dateFilter) {
+      case "this-week":
+        return {
+          start: startOfWeek(now, { weekStartsOn: 1 }),
+          end: now
+        };
+      case "last-week":
+        return {
+          start: startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 }),
+          end: endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 })
+        };
+      case "this-month":
+        return {
+          start: startOfMonth(now),
+          end: now
+        };
+      case "last-month":
+        return {
+          start: startOfMonth(subMonths(now, 1)),
+          end: endOfMonth(subMonths(now, 1))
+        };
+      case "custom":
+        return customDateRange ? {
+          start: customDateRange.startDate,
+          end: customDateRange.endDate
+        } : { start: new Date(0), end: now };
+      default:
+        return { start: new Date(0), end: now };
+    }
+  };
 
   // Fetch transactions
   const { data: transactions, isLoading, error } = useQuery({
@@ -91,7 +147,7 @@ export default function Transactions() {
   };
 
   // Filter transactions based on selected filters
-  const filteredTransactions = transactions?.filter((transaction) => {
+  const filteredTransactions = transactions?.filter((transaction: any) => {
     // Check if transaction matches the account filter
     let matchesAccount = accountFilter === "all" || 
       (transaction.account_id && transaction.account_id.toString() === accountFilter);
@@ -110,7 +166,16 @@ export default function Transactions() {
       }
     }
     
-    return matchesAccount && matchesCategory;
+    // Check if transaction matches the date filter
+    let matchesDate = dateFilter === "all";
+    
+    if (!matchesDate && transaction.date) {
+      const transactionDate = parseISO(transaction.date);
+      const { start, end } = getDateRange();
+      matchesDate = isAfter(transactionDate, start) && isBefore(transactionDate, end);
+    }
+    
+    return matchesAccount && matchesCategory && matchesDate;
   }) || [];
 
   // Calculate pagination
@@ -154,13 +219,74 @@ export default function Transactions() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Accounts</SelectItem>
-                    {accounts?.map((account) => (
+                    {accounts?.map((account: any) => (
                       <SelectItem key={account.id} value={account.id.toString()}>
                         {account.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                
+                {/* Date filter */}
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="All Dates" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Dates</SelectItem>
+                    <SelectItem value="this-week">This Week</SelectItem>
+                    <SelectItem value="last-week">Last Week</SelectItem>
+                    <SelectItem value="this-month">This Month</SelectItem>
+                    <SelectItem value="last-month">Last Month</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Custom date range picker - show only when "custom" is selected */}
+                {dateFilter === "custom" && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-[240px] justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {customDateRange?.startDate ? (
+                          customDateRange.endDate ? (
+                            <>
+                              {format(customDateRange.startDate, "LLL dd, y")} -{" "}
+                              {format(customDateRange.endDate, "LLL dd, y")}
+                            </>
+                          ) : (
+                            format(customDateRange.startDate, "LLL dd, y")
+                          )
+                        ) : (
+                          <span>Pick a date range</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={customDateRange?.startDate}
+                        selected={{
+                          from: customDateRange?.startDate,
+                          to: customDateRange?.endDate,
+                        }}
+                        onSelect={(range: any) => {
+                          if (range?.from && range?.to) {
+                            setCustomDateRange({
+                              startDate: range.from,
+                              endDate: range.to,
+                            });
+                          }
+                        }}
+                        numberOfMonths={2}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
                 
                 {/* Multi-select Categories Filter */}
                 <DropdownMenu>
@@ -191,7 +317,7 @@ export default function Transactions() {
                         <DropdownMenuLabel className="text-xs font-bold text-primary py-1">
                           Income Categories
                         </DropdownMenuLabel>
-                        {incomeCategories?.map((category) => (
+                        {incomeCategories?.map((category: any) => (
                           <div key={`income-${category.id}`} className="flex items-center space-x-2 py-1 px-2">
                             <Checkbox 
                               id={`income-category-${category.id}`}
@@ -212,7 +338,7 @@ export default function Transactions() {
                         <DropdownMenuLabel className="text-xs font-bold text-destructive py-1">
                           Expense Categories
                         </DropdownMenuLabel>
-                        {expenseCategories?.map((category) => (
+                        {expenseCategories?.map((category: any) => (
                           <div key={`expense-${category.id}`} className="flex items-center space-x-2 py-1 px-2">
                             <Checkbox 
                               id={`expense-category-${category.id}`}
@@ -259,7 +385,7 @@ export default function Transactions() {
             </div>
           ) : isMobile ? (
             // Mobile view - list of transaction items
-            paginatedTransactions.map((transaction) => (
+            paginatedTransactions.map((transaction: any) => (
               <TransactionItem
                 key={transaction.id}
                 transaction={transaction}
@@ -293,7 +419,7 @@ export default function Transactions() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedTransactions.map((transaction) => (
+                  {paginatedTransactions.map((transaction: any) => (
                     <TransactionItem
                       key={transaction.id}
                       transaction={transaction}
