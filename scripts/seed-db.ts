@@ -1,137 +1,242 @@
-import { db } from "../server/db";
-import { accounts, incomeCategories, expenseCategories, transactions } from "../shared/schema";
-import { eq } from "drizzle-orm";
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from '../types/supabase';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Supabase credentials are not set in environment variables. Please set SUPABASE_URL and SUPABASE_ANON_KEY.');
+  process.exit(1);
+}
+
+const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 async function seedDatabase() {
   try {
-    console.log("Seeding database...");
+    // Seed accounts
+    console.log('Seeding accounts...');
+    const accounts = [
+      { name: 'Personal Checking', type: 'bank', balance: 5000, description: 'Main checking account' },
+      { name: 'Cash Wallet', type: 'cash', balance: 500, description: 'Physical cash' },
+      { name: 'Digital Wallet', type: 'mobile', balance: 1000, description: 'Mobile payment app' }
+    ];
+
+    for (const account of accounts) {
+      const { error } = await supabase
+        .from('accounts')
+        .upsert([{ 
+          ...account, 
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }], { 
+          onConflict: 'name' 
+        });
+      if (error) {
+        console.error(`Error creating account ${account.name}:`, error);
+      }
+    }
+
+    // Get income categories for reference
+    const { data: incomeCategories, error: incomeError } = await supabase
+      .from('income_categories')
+      .select('*');
     
-    // Check if we already have accounts, if yes, skip seeding
-    const existingAccounts = await db.select().from(accounts);
-    if (existingAccounts.length > 0) {
-      console.log("Database already has data, skipping seed.");
+    if (incomeError) {
+      console.error('Error retrieving income categories:', incomeError);
       return;
     }
 
-    console.log("Creating default accounts...");
-    const seedAccounts = [
-      { name: "Cash", type: "cash", description: "Physical cash", balance: 1000 },
-      { name: "Bank", type: "bank", description: "Checking account", balance: 5000 },
-      { name: "Mobile Wallet", type: "mobileWallet", description: "Digital wallet", balance: 500 }
-    ];
-
-    const createdAccounts = await db.insert(accounts).values(seedAccounts).returning();
-    console.log(`Created ${createdAccounts.length} accounts`);
-
-    console.log("Creating income categories...");
-    const seedIncomeCategories = [
-      { name: "Salary", description: "Monthly salary" },
-      { name: "Bonus", description: "Work bonuses" },
-      { name: "TA Bill", description: "Travel allowance" },
-      { name: "Investigation Bill", description: "Investigation allowance" },
-      { name: "Incentive", description: "Performance incentives" },
-      { name: "Rewards", description: "Other rewards" }
-    ];
-
-    const createdIncomeCategories = await db.insert(incomeCategories).values(seedIncomeCategories).returning();
-    console.log(`Created ${createdIncomeCategories.length} income categories`);
-
-    console.log("Creating expense categories...");
-    const seedExpenseCategories = [
-      { name: "Rent", description: "House rent" },
-      { name: "Food", description: "Groceries and dining" },
-      { name: "Parents", description: "Parents support" },
-      { name: "Wife's Expenses", description: "Spouse expenses" },
-      { name: "Transport", description: "Transportation costs" },
-      { name: "Utilities", description: "Bills and utilities" },
-      { name: "Entertainment", description: "Recreation and entertainment" },
-      { name: "Healthcare", description: "Medical expenses" }
-    ];
-
-    const createdExpenseCategories = await db.insert(expenseCategories).values(seedExpenseCategories).returning();
-    console.log(`Created ${createdExpenseCategories.length} expense categories`);
-
-    console.log("Creating sample transactions...");
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const lastWeek = new Date(today);
-    lastWeek.setDate(lastWeek.getDate() - 7);
-
-    const seedTransactions = [
-      {
-        amount: 2500,
-        description: "Monthly salary",
-        date: today.toISOString(),
-        accountId: createdAccounts[1].id, // Bank account
-        type: "income",
-        categoryId: createdIncomeCategories[0].id // Salary
-      },
-      {
-        amount: 75,
-        description: "Groceries",
-        date: yesterday.toISOString(),
-        accountId: createdAccounts[0].id, // Cash
-        type: "expense",
-        categoryId: createdExpenseCategories[1].id // Food
-      },
-      {
-        amount: 500,
-        description: "Rent payment",
-        date: lastWeek.toISOString(),
-        accountId: createdAccounts[1].id, // Bank account
-        type: "expense",
-        categoryId: createdExpenseCategories[0].id // Rent
-      },
-      {
-        amount: 200,
-        description: "Parents monthly support",
-        date: yesterday.toISOString(),
-        accountId: createdAccounts[1].id, // Bank account
-        type: "expense",
-        categoryId: createdExpenseCategories[2].id // Parents
-      },
-      {
-        amount: 150,
-        description: "Wife's shopping",
-        date: lastWeek.toISOString(),
-        accountId: createdAccounts[2].id, // Mobile wallet
-        type: "expense",
-        categoryId: createdExpenseCategories[3].id // Wife's Expenses
-      }
-    ];
-
-    // Process transactions and update account balances
-    for (const transaction of seedTransactions) {
-      await db.transaction(async (tx) => {
-        // Insert transaction
-        const [insertedTransaction] = await tx.insert(transactions).values(transaction).returning();
-        console.log(`Created transaction: ${insertedTransaction.description}`);
-        
-        // Update account balance
-        const [account] = await tx.select().from(accounts).where(eq(accounts.id, transaction.accountId));
-        
-        if (account) {
-          const balanceChange = transaction.type === "income" ? transaction.amount : -transaction.amount;
-          await tx
-            .update(accounts)
-            .set({ balance: account.balance + balanceChange })
-            .where(eq(accounts.id, account.id));
-          
-          console.log(`Updated account ${account.name} balance: ${account.balance} -> ${account.balance + balanceChange}`);
-        }
-      });
+    // Get expense categories for reference
+    const { data: expenseCategories, error: expenseError } = await supabase
+      .from('expense_categories')
+      .select('*');
+    
+    if (expenseError) {
+      console.error('Error retrieving expense categories:', expenseError);
+      return;
     }
 
-    console.log("Database seeding completed successfully!");
+    // Get accounts for reference
+    const { data: accountsData, error: accountsError } = await supabase
+      .from('accounts')
+      .select('*');
+    
+    if (accountsError) {
+      console.error('Error retrieving accounts:', accountsError);
+      return;
+    }
+
+    // Seed transactions
+    console.log('Seeding transactions...');
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    // Generate transactions for the past 3 months
+    const transactions = [];
+    
+    for (let monthOffset = 0; monthOffset < 3; monthOffset++) {
+      const month = currentMonth - monthOffset;
+      const year = month < 0 ? currentYear - 1 : currentYear;
+      const adjustedMonth = month < 0 ? month + 12 : month;
+      
+      // Days in the month
+      const daysInMonth = new Date(year, adjustedMonth + 1, 0).getDate();
+      
+      // Income transactions (usually at beginning or end of month)
+      if (incomeCategories && incomeCategories.length > 0 && accountsData && accountsData.length > 0) {
+        // Salary - end of month
+        transactions.push({
+          account_id: accountsData[0].id,
+          category_id: incomeCategories.find(c => c.name === 'Salary')?.id || incomeCategories[0].id,
+          type: 'income',
+          amount: 5000,
+          date: new Date(year, adjustedMonth, 25).toISOString().split('T')[0],
+          description: 'Monthly salary',
+          notes: 'Regular monthly salary payment'
+        });
+        
+        // TA Bill - mid month
+        transactions.push({
+          account_id: accountsData[0].id,
+          category_id: incomeCategories.find(c => c.name === 'TA Bill')?.id || incomeCategories[0].id,
+          type: 'income',
+          amount: 300,
+          date: new Date(year, adjustedMonth, 15).toISOString().split('T')[0],
+          description: 'TA bill reimbursement',
+          notes: 'Travel allowance reimbursement'
+        });
+        
+        // Random incentive (only in some months)
+        if (monthOffset === 1) {
+          transactions.push({
+            account_id: accountsData[0].id,
+            category_id: incomeCategories.find(c => c.name === 'Incentive')?.id || incomeCategories[0].id,
+            type: 'income',
+            amount: 200,
+            date: new Date(year, adjustedMonth, 20).toISOString().split('T')[0],
+            description: 'Performance incentive',
+            notes: 'Quarterly performance bonus'
+          });
+        }
+      }
+      
+      // Expense transactions throughout the month
+      if (expenseCategories && expenseCategories.length > 0 && accountsData && accountsData.length > 0) {
+        // Rent - beginning of month
+        transactions.push({
+          account_id: accountsData[0].id,
+          category_id: expenseCategories.find(c => c.name === 'Rent')?.id || expenseCategories[0].id,
+          type: 'expense',
+          amount: 1200,
+          date: new Date(year, adjustedMonth, 5).toISOString().split('T')[0],
+          description: 'Monthly rent',
+          notes: 'Apartment rent payment'
+        });
+        
+        // Food expenses - multiple times throughout month
+        for (let i = 0; i < 8; i++) {
+          const day = Math.floor(Math.random() * daysInMonth) + 1;
+          const amount = Math.floor(Math.random() * 50) + 20;
+          
+          transactions.push({
+            account_id: accountsData[Math.floor(Math.random() * accountsData.length)].id,
+            category_id: expenseCategories.find(c => c.name === 'Food')?.id || expenseCategories[0].id,
+            type: 'expense',
+            amount: amount,
+            date: new Date(year, adjustedMonth, day).toISOString().split('T')[0],
+            description: `Groceries ${i+1}`,
+            notes: 'Food and household items'
+          });
+        }
+        
+        // Money for parents - once a month
+        transactions.push({
+          account_id: accountsData[0].id,
+          category_id: expenseCategories.find(c => c.name === 'Parents')?.id || expenseCategories[0].id,
+          type: 'expense',
+          amount: 300,
+          date: new Date(year, adjustedMonth, 10).toISOString().split('T')[0],
+          description: 'Support for parents',
+          notes: 'Monthly allowance sent to parents'
+        });
+        
+        // Wife expenses - a few times a month
+        for (let i = 0; i < 3; i++) {
+          const day = Math.floor(Math.random() * daysInMonth) + 1;
+          const amount = Math.floor(Math.random() * 100) + 50;
+          
+          transactions.push({
+            account_id: accountsData[Math.floor(Math.random() * accountsData.length)].id,
+            category_id: expenseCategories.find(c => c.name === 'Wife')?.id || expenseCategories[0].id,
+            type: 'expense',
+            amount: amount,
+            date: new Date(year, adjustedMonth, day).toISOString().split('T')[0],
+            description: `Wife expense ${i+1}`,
+            notes: 'Expenses for spouse'
+          });
+        }
+        
+        // Entertainment expenses
+        for (let i = 0; i < 2; i++) {
+          const day = Math.floor(Math.random() * daysInMonth) + 1;
+          const amount = Math.floor(Math.random() * 70) + 30;
+          
+          transactions.push({
+            account_id: accountsData[Math.floor(Math.random() * accountsData.length)].id,
+            category_id: expenseCategories.find(c => c.name === 'Entertainment')?.id || expenseCategories[0].id,
+            type: 'expense',
+            amount: amount,
+            date: new Date(year, adjustedMonth, day).toISOString().split('T')[0],
+            description: `Entertainment ${i+1}`,
+            notes: 'Movies, subscriptions, or other entertainment'
+          });
+        }
+        
+        // Utilities - mid month
+        transactions.push({
+          account_id: accountsData[0].id,
+          category_id: expenseCategories.find(c => c.name === 'Utilities')?.id || expenseCategories[0].id,
+          type: 'expense',
+          amount: 150,
+          date: new Date(year, adjustedMonth, 15).toISOString().split('T')[0],
+          description: 'Utility bills',
+          notes: 'Electricity, water, internet bills'
+        });
+      }
+    }
+    
+    // Insert transactions in batches to avoid overwhelming the database
+    const batchSize = 20;
+    for (let i = 0; i < transactions.length; i += batchSize) {
+      const batch = transactions.slice(i, i + batchSize);
+      const { error } = await supabase
+        .from('transactions')
+        .insert(batch);
+      
+      if (error) {
+        console.error(`Error inserting transaction batch ${i / batchSize + 1}:`, error);
+      } else {
+        console.log(`Inserted transaction batch ${i / batchSize + 1} of ${Math.ceil(transactions.length / batchSize)}`);
+      }
+    }
+
+    console.log(`Seeded ${transactions.length} transactions.`);
+    console.log('Database seed completed successfully!');
   } catch (error) {
-    console.error("Error seeding database:", error);
-    process.exit(1);
+    console.error('Error seeding database:', error);
   }
 }
 
-// Run the seeding function
-seedDatabase().then(() => {
-  console.log("Seed script completed, exiting...");
-  process.exit(0);
-});
+seedDatabase()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('Error in seed script:', error);
+    process.exit(1);
+  });

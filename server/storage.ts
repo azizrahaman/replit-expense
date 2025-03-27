@@ -704,7 +704,11 @@ import { DatabaseStorage } from "./database-storage";
 import { SupabaseStorage } from './supabase-storage';
 
 // Use Supabase storage implementation
-export const storage = new SupabaseStorage();
+// Import the DatabaseStorage
+import { DatabaseStorage } from "./database-storage";
+
+// Use DatabaseStorage that works with direct PostgreSQL connection
+export const storage = new DatabaseStorage();
 
 // For development/testing, use memory storage
 // export const storage = new MemStorage();
