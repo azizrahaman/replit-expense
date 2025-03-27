@@ -56,8 +56,10 @@ export default function Transactions() {
 
   // Filter transactions based on selected filters
   const filteredTransactions = transactions?.filter((transaction) => {
-    let matchesAccount = accountFilter === "all" || transaction.accountId.toString() === accountFilter;
-    let matchesCategory = categoryFilter === "all" || transaction.categoryId.toString() === categoryFilter;
+    let matchesAccount = accountFilter === "all" || transaction.accountId?.toString() === accountFilter;
+    let matchesCategory = categoryFilter === "all" || 
+      (transaction.categoryId !== null && transaction.categoryId !== undefined && 
+       transaction.categoryId.toString() === categoryFilter);
     return matchesAccount && matchesCategory;
   }) || [];
 

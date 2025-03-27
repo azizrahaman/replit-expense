@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertTransactionSchema } from "@shared/schema";
+import { cn } from "@/lib/utils";
 
 import {
   Dialog,
@@ -173,15 +174,18 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
     }
   }
 
-  // Update categoryId when type changes
+  // Update categoryId when type changes - only on initial load or type change, not on every render
   useEffect(() => {
-    const type = form.getValues("type");
-    if (type === "income" && incomeCategories.length > 0) {
-      form.setValue("categoryId", incomeCategories[0].id);
-    } else if (type === "expense" && expenseCategories.length > 0) {
-      form.setValue("categoryId", expenseCategories[0].id);
+    // Only run this effect if we're not editing an existing transaction
+    if (!isEditing) {
+      const type = form.getValues("type");
+      if (type === "income" && incomeCategories.length > 0) {
+        form.setValue("categoryId", incomeCategories[0].id, { shouldDirty: false });
+      } else if (type === "expense" && expenseCategories.length > 0) {
+        form.setValue("categoryId", expenseCategories[0].id, { shouldDirty: false });
+      }
     }
-  }, [transactionType, form, incomeCategories, expenseCategories]);
+  }, [transactionType, isEditing]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -375,5 +379,3 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
     </Dialog>
   );
 }
-
-import { cn } from "@/lib/utils";
