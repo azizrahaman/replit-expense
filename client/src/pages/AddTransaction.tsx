@@ -146,20 +146,29 @@ export default function AddTransaction() {
   return (
     <div className="py-2 px-3 sm:px-4">
       {/* Page header */}
-      <div className="mb-3 flex items-center">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="mr-2"
+            onClick={() => setLocation("/dashboard")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h2 className="text-2xl font-bold text-gray-800">Add Transaction</h2>
+        </div>
         <Button 
-          variant="ghost" 
-          size="icon" 
-          className="mr-2"
-          onClick={() => setLocation("/dashboard")}
+          type="submit" 
+          form="transaction-form"
+          size="sm"
         >
-          <ArrowLeft className="h-5 w-5" />
+          Save
         </Button>
-        <h2 className="text-2xl font-bold text-gray-800">Add Transaction</h2>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form id="transaction-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
           {/* Transaction Type Selection */}
           <FormField
             control={form.control}
@@ -173,7 +182,7 @@ export default function AddTransaction() {
                       type="button"
                       variant={transactionType === "income" ? "default" : "outline"}
                       className={cn(
-                        "h-20 font-semibold",
+                        "h-14 font-semibold",
                         transactionType === "income" && "bg-green-500 hover:bg-green-600"
                       )}
                       onClick={() => setTransactionType("income")}
@@ -184,7 +193,7 @@ export default function AddTransaction() {
                       type="button"
                       variant={transactionType === "expense" ? "default" : "outline"}
                       className={cn(
-                        "h-20 font-semibold",
+                        "h-14 font-semibold",
                         transactionType === "expense" && "bg-red-500 hover:bg-red-600"
                       )}
                       onClick={() => setTransactionType("expense")}
@@ -220,61 +229,6 @@ export default function AddTransaction() {
                     />
                   </div>
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Description Field */}
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Input {...field} className="h-14" placeholder="What's this transaction for?" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Date Field */}
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal h-14",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-5 w-5 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
                 <FormMessage />
               </FormItem>
             )}
@@ -336,6 +290,61 @@ export default function AddTransaction() {
               </p>
             )}
           </div>
+
+          {/* Description Field */}
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Input {...field} className="h-14" placeholder="What's this transaction for?" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Date Field */}
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal h-14",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-5 w-5 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           {/* Submit Button */}
           <Button 
