@@ -21,7 +21,17 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, Filter } from "lucide-react";
 import TransactionItem from "@/components/TransactionItem";
 import TransactionModal from "@/components/TransactionModal";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -31,7 +41,7 @@ export default function Transactions() {
   const isMobile = useIsMobile();
   const [isAddTransactionModalOpen, setIsAddTransactionModalOpen] = useState(false);
   const [accountFilter, setAccountFilter] = useState("all");
-  const [categoryFilter, setcategoryFilter] = useState("all");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -59,15 +69,35 @@ export default function Transactions() {
     queryKey: ["/api/expense-categories"],
   });
 
+  // Handle category selection
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(categoryId)) {
+        return prev.filter(id => id !== categoryId);
+      } else {
+        return [...prev, categoryId];
+      }
+    });
+    
+    // Reset pagination when filter changes
+    setCurrentPage(1);
+  };
+
+  // Clear all selected categories
+  const clearCategoryFilters = () => {
+    setSelectedCategories([]);
+    setCurrentPage(1);
+  };
+
   // Filter transactions based on selected filters
   const filteredTransactions = transactions?.filter((transaction) => {
     // Check if transaction matches the account filter
     let matchesAccount = accountFilter === "all" || 
       (transaction.account_id && transaction.account_id.toString() === accountFilter);
     
-    // Check if transaction matches the category filter
-    let matchesCategory = categoryFilter === "all" || 
-      (transaction.category_id && transaction.category_id.toString() === categoryFilter);
+    // Check if transaction matches any of the selected categories
+    let matchesCategory = selectedCategories.length === 0 || 
+      (transaction.category_id && selectedCategories.includes(transaction.category_id.toString()));
     
     return matchesAccount && matchesCategory;
   }) || [];
@@ -120,26 +150,76 @@ export default function Transactions() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={categoryFilter} onValueChange={setcategoryFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="income" disabled className="font-bold">Income</SelectItem>
-                    {incomeCategories?.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="expense" disabled className="font-bold">Expense</SelectItem>
-                    {expenseCategories?.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                
+                {/* Multi-select Categories Filter */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full sm:w-[180px]">
+                      <Filter className="h-4 w-4 mr-2" />
+                      {selectedCategories.length === 0 
+                        ? "All Categories" 
+                        : `${selectedCategories.length} Selected`}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    <DropdownMenuLabel>Filter by Categories</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    
+                    {selectedCategories.length > 0 && (
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start text-sm mb-2"
+                        onClick={clearCategoryFilters}
+                      >
+                        Clear all filters
+                      </Button>
+                    )}
+                    
+                    <div className="max-h-[250px] overflow-y-auto px-1">
+                      <div className="mb-2">
+                        <DropdownMenuLabel className="text-xs font-bold text-primary py-1">
+                          Income Categories
+                        </DropdownMenuLabel>
+                        {incomeCategories?.map((category) => (
+                          <div key={category.id} className="flex items-center space-x-2 py-1 px-2">
+                            <Checkbox 
+                              id={`income-category-${category.id}`}
+                              checked={selectedCategories.includes(category.id.toString())}
+                              onCheckedChange={() => toggleCategory(category.id.toString())}
+                            />
+                            <Label 
+                              htmlFor={`income-category-${category.id}`}
+                              className="text-sm cursor-pointer flex-grow"
+                            >
+                              {category.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div>
+                        <DropdownMenuLabel className="text-xs font-bold text-destructive py-1">
+                          Expense Categories
+                        </DropdownMenuLabel>
+                        {expenseCategories?.map((category) => (
+                          <div key={category.id} className="flex items-center space-x-2 py-1 px-2">
+                            <Checkbox 
+                              id={`expense-category-${category.id}`}
+                              checked={selectedCategories.includes(category.id.toString())}
+                              onCheckedChange={() => toggleCategory(category.id.toString())}
+                            />
+                            <Label 
+                              htmlFor={`expense-category-${category.id}`}
+                              className="text-sm cursor-pointer flex-grow"
+                            >
+                              {category.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>
