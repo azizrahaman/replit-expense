@@ -103,23 +103,30 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createAccount(account: InsertAccount): Promise<Account> {
-    const now = new Date().toISOString();
-    const { data, error } = await supabase
-      .from('accounts')
-      .insert({
-        ...account,
-        created_at: now,
-        updated_at: now
-      })
-      .select()
-      .single();
-    
-    if (error) {
+    try {
+      const { data, error } = await supabase
+        .from('accounts')
+        .insert(account)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error creating account:', error);
+        throw new Error(error.message || 'Failed to create account');
+      }
+      
+      if (!data) {
+        throw new Error('No data returned after creating account');
+      }
+      
+      return data as Account;
+    } catch (error) {
       console.error('Error creating account:', error);
-      throw new Error(`Failed to create account: ${error.message}`);
+      if (error instanceof Error) {
+        throw new Error(`Failed to create account: ${error.message}`);
+      }
+      throw new Error('Failed to create account: Unknown error');
     }
-    
-    return data as Account;
   }
 
   async updateAccount(id: number, account: Partial<InsertAccount>): Promise<Account | undefined> {
