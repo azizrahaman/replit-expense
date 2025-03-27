@@ -19,11 +19,27 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
   // Fetch accounts
   const { data: accounts, isLoading, error } = useQuery({
     queryKey: ["/api/accounts"],
+    queryFn: async () => {
+      const response = await fetch("/api/accounts");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to fetch accounts");
+      }
+      return response.json();
+    }
   });
 
   // Fetch total balance
   const { data: balanceData } = useQuery({
     queryKey: ["/api/summary/balance"],
+    queryFn: async () => {
+      const response = await fetch("/api/summary/balance");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to fetch balance");
+      }
+      return response.json();
+    }
   });
 
   const handleOpenModal = useCallback(() => {
