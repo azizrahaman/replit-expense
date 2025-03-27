@@ -50,10 +50,6 @@ export const transactions = pgTable("transactions", {
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
   id: true,
-}).extend({
-  // Adding support for account_id and category_id to match Supabase schema
-  account_id: z.number().optional(),
-  category_id: z.number().optional(),
 });
 
 // Types
@@ -74,12 +70,10 @@ export const transactionWithDetailsSchema = z.object({
   id: z.number(),
   amount: z.number(),
   description: z.string(),
-  date: z.union([z.string(), z.date()]),
+  date: z.date(),
   accountId: z.number(),
-  account_id: z.number().optional(),
   type: z.string(),
   categoryId: z.number(),
-  category_id: z.number().optional(),
   accountName: z.string(),
   categoryName: z.string(),
 });
@@ -88,12 +82,10 @@ export type TransactionWithDetails = z.infer<typeof transactionWithDetailsSchema
 
 // Time period for reports
 export const timePeriodSchema = z.enum([
-  "all",
-  "this-week",
-  "last-week",
-  "this-month",
-  "last-month",
-  "this-year",
+  "this_week",
+  "this_month",
+  "last_month",
+  "this_year",
   "custom"
 ]);
 
@@ -101,8 +93,8 @@ export type TimePeriod = z.infer<typeof timePeriodSchema>;
 
 // Custom date range for reports
 export const dateRangeSchema = z.object({
-  startDate: z.union([z.string(), z.date()]),
-  endDate: z.union([z.string(), z.date()]),
+  startDate: z.date(),
+  endDate: z.date(),
 });
 
 export type DateRange = z.infer<typeof dateRangeSchema>;

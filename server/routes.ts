@@ -29,12 +29,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const accounts = await storage.getAccounts();
       res.json(accounts);
     } catch (error) {
-      console.error("Error fetching accounts:", error);
-      if (error instanceof Error && error.message.includes("relation") && error.message.includes("does not exist")) {
-        return res.status(500).json({ 
-          message: "Database tables not initialized. Please run database migrations first." 
-        });
-      }
       handleError(res, error);
     }
   });
@@ -58,17 +52,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const accountData = insertAccountSchema.parse(req.body);
       const newAccount = await storage.createAccount(accountData);
-      if (!newAccount) {
-        return res.status(400).json({ message: "Failed to create account - invalid data" });
-      }
       res.status(201).json(newAccount);
     } catch (error) {
-      console.error("Error creating account:", error);
-      if (error instanceof Error && error.message.includes("relation") && error.message.includes("does not exist")) {
-        return res.status(500).json({ 
-          message: "Database tables not initialized. Please run database migrations first." 
-        });
-      }
       handleError(res, error);
     }
   });
