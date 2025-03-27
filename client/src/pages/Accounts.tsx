@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,7 +14,7 @@ interface AccountsProps {
 
 export default function Accounts({ hideHeader = false }: AccountsProps) {
   const { toast } = useToast();
-  const [isAddAccountModalOpen, setIsAddAccountModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch accounts
   const { data: accounts, isLoading, error } = useQuery({
@@ -25,6 +25,15 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
   const { data: balanceData } = useQuery({
     queryKey: ["/api/summary/balance"],
   });
+
+  const handleOpenModal = useCallback(() => {
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
+
 
   if (error) {
     toast({
@@ -43,7 +52,7 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
             <h2 className="text-2xl font-bold text-gray-800">Accounts</h2>
           </div>
           <div className="mt-4 flex md:mt-0 md:ml-4">
-            <Button onClick={() => setIsAddAccountModalOpen(true)}>
+            <Button onClick={handleOpenModal}>
               <Plus className="mr-2 h-5 w-5" />
               Add Account
             </Button>
@@ -65,7 +74,7 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
               <p className="text-sm text-gray-500 mt-1">Total across all accounts</p>
             </div>
             {hideHeader && (
-              <Button onClick={() => setIsAddAccountModalOpen(true)}>
+              <Button onClick={handleOpenModal}>
                 <Plus className="mr-2 h-5 w-5" />
                 Add Account
               </Button>
@@ -78,7 +87,7 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
       <Card>
         <CardContent className="p-4">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Your Accounts</h3>
-          
+
           {isLoading ? (
             <>
               <Skeleton className="h-16 w-full mb-3" />
@@ -92,7 +101,7 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
                 Get started by creating a new account.
               </p>
               <div className="mt-4">
-                <Button onClick={() => setIsAddAccountModalOpen(true)}>
+                <Button onClick={handleOpenModal}>
                   <Plus className="mr-2 h-5 w-5" />
                   Add Account
                 </Button>
@@ -107,9 +116,9 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
       </Card>
 
       {/* Add Account Modal */}
-      <AccountModal 
-        isOpen={isAddAccountModalOpen} 
-        onClose={() => setIsAddAccountModalOpen(false)} 
+      <AccountModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
       />
     </div>
   );
