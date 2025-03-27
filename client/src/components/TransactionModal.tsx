@@ -76,7 +76,7 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   });
 
   // Fetch transaction data if editing
-  const { data: transaction } = useQuery({
+  const { data: transaction, isSuccess: transactionFetched } = useQuery({
     queryKey: ["/api/transactions", transactionId],
     enabled: !!transactionId && isOpen,
   });
@@ -93,26 +93,29 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
     },
   });
 
-  // Update form values when editing an existing transaction
+  // Update form values when editing an existing transaction or when data is loaded
   useEffect(() => {
-    if (transaction) {
-      setIsEditing(true);
-      form.reset({
-        ...transaction,
-        date: new Date(transaction.date),
-      });
-    } else {
-      setIsEditing(false);
-      form.reset({
-        amount: 0,
-        description: "",
-        date: new Date(),
-        accountId: accounts[0]?.id || 1,
-        type: "expense",
-        categoryId: expenseCategories[0]?.id || 1,
-      });
+    // Only update the form if we have the necessary data loaded
+    if (accounts.length > 0 && expenseCategories.length > 0 && incomeCategories.length > 0) {
+      if (transaction && transactionFetched) {
+        setIsEditing(true);
+        form.reset({
+          ...transaction,
+          date: new Date(transaction.date),
+        }, { keepDefaultValues: false });
+      } else if (!transactionId) {
+        setIsEditing(false);
+        form.reset({
+          amount: 0,
+          description: "",
+          date: new Date(),
+          accountId: accounts[0]?.id || 1,
+          type: "expense",
+          categoryId: expenseCategories[0]?.id || 1,
+        }, { keepDefaultValues: false });
+      }
     }
-  }, [transaction, form, accounts, expenseCategories]);
+  }, [transactionId, transactionFetched, transaction, accounts.length, incomeCategories.length, expenseCategories.length]);
 
   // Watch type to update categories shown
   const transactionType = form.watch("type");
