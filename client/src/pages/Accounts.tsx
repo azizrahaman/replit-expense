@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,13 +35,15 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
   }, []);
 
 
-  if (error) {
-    toast({
-      variant: "destructive",
-      title: "Error loading accounts",
-      description: "There was an error loading your accounts. Please try again.",
-    });
-  }
+  useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error loading accounts",
+        description: "There was an error loading your accounts. Please try again.",
+      });
+    }
+  }, [error, toast]);
 
   return (
     <div className={hideHeader ? "" : "py-6 px-4 sm:px-6 lg:px-8"}>
