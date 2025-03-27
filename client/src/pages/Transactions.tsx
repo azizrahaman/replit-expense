@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   format, 
@@ -113,18 +113,24 @@ export default function Transactions() {
   });
 
   // Fetch accounts for filter
-  const { data: accounts } = useQuery({
+  const { data: accountsData } = useQuery<any>({
     queryKey: ["/api/accounts"],
   });
+  // Ensure accounts is always an array
+  const accounts: any[] = Array.isArray(accountsData) ? accountsData : [];
 
   // Fetch categories for filter
-  const { data: incomeCategories } = useQuery({
+  const { data: incomeCategoriesData } = useQuery<any>({
     queryKey: ["/api/income-categories"],
   });
+  // Ensure income categories is always an array
+  const incomeCategories: any[] = Array.isArray(incomeCategoriesData) ? incomeCategoriesData : [];
 
-  const { data: expenseCategories } = useQuery({
+  const { data: expenseCategoriesData } = useQuery<any>({
     queryKey: ["/api/expense-categories"],
   });
+  // Ensure expense categories is always an array
+  const expenseCategories: any[] = Array.isArray(expenseCategoriesData) ? expenseCategoriesData : [];
 
   // Handle category selection
   const toggleCategory = (categoryId: string, categoryType: 'income' | 'expense') => {
@@ -148,36 +154,40 @@ export default function Transactions() {
   };
 
   // Filter transactions based on selected filters
-  const filteredTransactions = transactions?.filter((transaction: any) => {
-    // Check if transaction matches the account filter
-    let matchesAccount = accountFilter === "all" || 
-      (transaction.account_id && transaction.account_id.toString() === accountFilter);
-    
-    // Check if transaction matches any of the selected categories
-    let matchesCategory = selectedCategories.length === 0;
-    
-    if (!matchesCategory && transaction.category_id && transaction.type) {
-      // For income transactions, check if category matches any selected income category
-      if (transaction.type === 'income') {
-        matchesCategory = selectedCategories.includes(`income-${transaction.category_id}`);
-      } 
-      // For expense transactions, check if category matches any selected expense category
-      else if (transaction.type === 'expense') {
-        matchesCategory = selectedCategories.includes(`expense-${transaction.category_id}`);
+  // Performance optimization: Memoize the filtered transactions to avoid recalculating on every render
+  const filteredTransactions = useMemo(() => {
+    return (transactions || []).filter((transaction: any) => {
+      // Check if transaction matches the account filter
+      const matchesAccount = accountFilter === "all" || 
+        (transaction.account_id && transaction.account_id.toString() === accountFilter);
+      
+      if (!matchesAccount) return false; // Early return if account doesn't match
+      
+      // Check if transaction matches any of the selected categories
+      if (selectedCategories.length > 0) {
+        if (!transaction.category_id || !transaction.type) return false;
+        
+        const categoryKey = `${transaction.type}-${transaction.category_id}`;
+        const matchesCategory = selectedCategories.includes(categoryKey);
+        
+        if (!matchesCategory) return false; // Early return if category doesn't match
       }
-    }
-    
-    // Check if transaction matches the date filter
-    let matchesDate = dateFilter === "all";
-    
-    if (!matchesDate && transaction.date) {
-      const transactionDate = parseISO(transaction.date);
-      const { start, end } = getDateRange();
-      matchesDate = isAfter(transactionDate, start) && isBefore(transactionDate, end);
-    }
-    
-    return matchesAccount && matchesCategory && matchesDate;
-  }) || [];
+      
+      // Check if transaction matches the date filter
+      if (dateFilter !== "all") {
+        if (!transaction.date) return false;
+        
+        const transactionDate = parseISO(transaction.date);
+        const { start, end } = getDateRange();
+        const matchesDate = isAfter(transactionDate, start) && isBefore(transactionDate, end);
+        
+        if (!matchesDate) return false; // Early return if date doesn't match
+      }
+      
+      return true; // If we get here, all filters match
+    });
+  }, [transactions, accountFilter, selectedCategories, dateFilter, 
+      dateFilter === "custom" ? customDateRange : null]); // Dependency array
 
   // Calculate total amount whenever filtered transactions change
   useEffect(() => {
@@ -228,7 +238,7 @@ export default function Transactions() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Accounts</SelectItem>
-                    {accounts?.map((account: any) => (
+                    {(accounts || []).map((account: any) => (
                       <SelectItem key={account.id} value={account.id.toString()}>
                         {account.name}
                       </SelectItem>
@@ -326,7 +336,7 @@ export default function Transactions() {
                         <DropdownMenuLabel className="text-xs font-bold text-primary py-1">
                           Income Categories
                         </DropdownMenuLabel>
-                        {incomeCategories?.map((category: any) => (
+                        {(incomeCategories || []).map((category: any) => (
                           <div key={`income-${category.id}`} className="flex items-center space-x-2 py-1 px-2">
                             <Checkbox 
                               id={`income-category-${category.id}`}
@@ -347,7 +357,7 @@ export default function Transactions() {
                         <DropdownMenuLabel className="text-xs font-bold text-destructive py-1">
                           Expense Categories
                         </DropdownMenuLabel>
-                        {expenseCategories?.map((category: any) => (
+                        {(expenseCategories || []).map((category: any) => (
                           <div key={`expense-${category.id}`} className="flex items-center space-x-2 py-1 px-2">
                             <Checkbox 
                               id={`expense-category-${category.id}`}
