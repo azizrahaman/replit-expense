@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,52 +14,25 @@ interface AccountsProps {
 
 export default function Accounts({ hideHeader = false }: AccountsProps) {
   const { toast } = useToast();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddAccountModalOpen, setIsAddAccountModalOpen] = useState(false);
 
   // Fetch accounts
   const { data: accounts, isLoading, error } = useQuery({
     queryKey: ["/api/accounts"],
-    queryFn: async () => {
-      const response = await fetch("/api/accounts");
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to fetch accounts");
-      }
-      return response.json();
-    }
   });
 
   // Fetch total balance
   const { data: balanceData } = useQuery({
     queryKey: ["/api/summary/balance"],
-    queryFn: async () => {
-      const response = await fetch("/api/summary/balance");
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to fetch balance");
-      }
-      return response.json();
-    }
   });
 
-  const handleOpenModal = useCallback(() => {
-    setIsModalOpen(true);
-  }, []);
-
-  const handleCloseModal = useCallback(() => {
-    setIsModalOpen(false);
-  }, []);
-
-
-  useEffect(() => {
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error loading accounts",
-        description: "There was an error loading your accounts. Please try again.",
-      });
-    }
-  }, [error, toast]);
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "Error loading accounts",
+      description: "There was an error loading your accounts. Please try again.",
+    });
+  }
 
   return (
     <div className={hideHeader ? "" : "py-6 px-4 sm:px-6 lg:px-8"}>
@@ -70,7 +43,7 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
             <h2 className="text-2xl font-bold text-gray-800">Accounts</h2>
           </div>
           <div className="mt-4 flex md:mt-0 md:ml-4">
-            <Button onClick={handleOpenModal}>
+            <Button onClick={() => setIsAddAccountModalOpen(true)}>
               <Plus className="mr-2 h-5 w-5" />
               Add Account
             </Button>
@@ -92,7 +65,7 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
               <p className="text-sm text-gray-500 mt-1">Total across all accounts</p>
             </div>
             {hideHeader && (
-              <Button onClick={handleOpenModal}>
+              <Button onClick={() => setIsAddAccountModalOpen(true)}>
                 <Plus className="mr-2 h-5 w-5" />
                 Add Account
               </Button>
@@ -105,7 +78,7 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
       <Card>
         <CardContent className="p-4">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Your Accounts</h3>
-
+          
           {isLoading ? (
             <>
               <Skeleton className="h-16 w-full mb-3" />
@@ -119,7 +92,7 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
                 Get started by creating a new account.
               </p>
               <div className="mt-4">
-                <Button onClick={handleOpenModal}>
+                <Button onClick={() => setIsAddAccountModalOpen(true)}>
                   <Plus className="mr-2 h-5 w-5" />
                   Add Account
                 </Button>
@@ -134,9 +107,9 @@ export default function Accounts({ hideHeader = false }: AccountsProps) {
       </Card>
 
       {/* Add Account Modal */}
-      <AccountModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
+      <AccountModal 
+        isOpen={isAddAccountModalOpen} 
+        onClose={() => setIsAddAccountModalOpen(false)} 
       />
     </div>
   );

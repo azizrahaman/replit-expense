@@ -701,13 +701,6 @@ export class MemStorage implements IStorage {
 import { DatabaseStorage } from "./database-storage";
 
 // For production, use the database storage
-import { SupabaseStorage } from './supabase-storage';
-
-// Use Supabase storage implementation
-// Import the DatabaseStorage
-import { DatabaseStorage } from "./database-storage";
-
-// Use DatabaseStorage that works with direct PostgreSQL connection
 export const storage = new DatabaseStorage();
 
 // For development/testing, use memory storage
