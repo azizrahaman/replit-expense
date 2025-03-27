@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -242,217 +241,239 @@ export default function Reports() {
         </Card>
       </div>
 
-      {/* Report tabs */}
-      <Tabs 
-        defaultValue="income-expense" 
-        value={activeTab} 
-        onValueChange={setActiveTab} 
-        className="mb-6"
-      >
-        <TabsList className="grid w-full grid-cols-4 mb-4 overflow-x-auto">
-          <TabsTrigger value="income-expense" className="text-xs sm:text-sm md:text-base whitespace-nowrap px-1 sm:px-2 md:px-4">Income vs Expenses</TabsTrigger>
-          <TabsTrigger value="income-categories" className="text-xs sm:text-sm md:text-base whitespace-nowrap px-1 sm:px-2 md:px-4">Income Breakdown</TabsTrigger>
-          <TabsTrigger value="expense-categories" className="text-xs sm:text-sm md:text-base whitespace-nowrap px-1 sm:px-2 md:px-4">Expense Breakdown</TabsTrigger>
-          <TabsTrigger value="account-summary" className="text-xs sm:text-sm md:text-base whitespace-nowrap px-1 sm:px-2 md:px-4">Account Summary</TabsTrigger>
-        </TabsList>
+      {/* Report tabs - Using a custom vertical tab layout */}
+      <div className="flex flex-col md:flex-row gap-6 mb-6">
+        {/* Vertical tab menu */}
+        <div className="md:w-64 w-full">
+          <div className="bg-white rounded-md shadow p-1">
+            <div 
+              className={`p-3 rounded-md mb-1 cursor-pointer font-medium ${activeTab === "income-expense" ? "bg-primary text-white" : "hover:bg-gray-100"}`}
+              onClick={() => setActiveTab("income-expense")}
+            >
+              Income vs Expenses
+            </div>
+            <div 
+              className={`p-3 rounded-md mb-1 cursor-pointer font-medium ${activeTab === "income-categories" ? "bg-primary text-white" : "hover:bg-gray-100"}`}
+              onClick={() => setActiveTab("income-categories")}
+            >
+              Income Breakdown
+            </div>
+            <div 
+              className={`p-3 rounded-md mb-1 cursor-pointer font-medium ${activeTab === "expense-categories" ? "bg-primary text-white" : "hover:bg-gray-100"}`}
+              onClick={() => setActiveTab("expense-categories")}
+            >
+              Expense Breakdown
+            </div>
+            <div 
+              className={`p-3 rounded-md cursor-pointer font-medium ${activeTab === "account-summary" ? "bg-primary text-white" : "hover:bg-gray-100"}`}
+              onClick={() => setActiveTab("account-summary")}
+            >
+              Account Summary
+            </div>
+          </div>
+        </div>
         
-        <TabsContent value="income-expense">
-          <Card>
-            <CardHeader>
-              <CardTitle>Income vs Expenses (Monthly)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {monthlyDataQuery.isLoading ? (
-                <div className="h-72 flex items-center justify-center">
-                  <Skeleton className="h-4/5 w-full" />
-                </div>
-              ) : (
-                <div className="h-96">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={formatMonthlyData()}
-                      margin={{
-                        top: 20,
-                        right: 50,
-                        left: 30,
-                        bottom: 20,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
-                      <Legend wrapperStyle={{ paddingTop: 10 }} />
-                      <Bar dataKey="income" name="Income" fill="#10B981" />
-                      <Bar dataKey="expense" name="Expenses" fill="#EF4444" />
-                      <Bar dataKey="savings" name="Savings" fill="#3B82F6" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="income-categories">
-          <Card>
-            <CardHeader>
-              <CardTitle>Income by Category</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {incomeByCategoryQuery.isLoading ? (
-                <div className="h-72 flex items-center justify-center">
-                  <Skeleton className="h-4/5 w-full" />
-                </div>
-              ) : incomeByCategoryQuery.data?.length === 0 ? (
-                <div className="text-center py-10">
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No income data</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    There is no income data for the selected period.
-                  </p>
-                </div>
-              ) : (
-                <div className="h-96">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 20, right: 50, bottom: 20, left: 50 }}>
-                      <Pie
-                        data={formatCategoryData(incomeByCategoryQuery.data)}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={130}
-                        fill="#8884d8"
-                        dataKey="value"
+        {/* Tab content */}
+        <div className="flex-1">
+          {/* Income vs Expenses Content */}
+          {activeTab === "income-expense" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Income vs Expenses (Monthly)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {monthlyDataQuery.isLoading ? (
+                  <div className="h-72 flex items-center justify-center">
+                    <Skeleton className="h-4/5 w-full" />
+                  </div>
+                ) : (
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={formatMonthlyData()}
+                        margin={{
+                          top: 20,
+                          right: 50,
+                          left: 30,
+                          bottom: 20,
+                        }}
                       >
-                        {formatCategoryData(incomeByCategoryQuery.data).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={INCOME_COLORS[index % INCOME_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="expense-categories">
-          <Card>
-            <CardHeader>
-              <CardTitle>Expenses by Category</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {expenseByCategoryQuery.isLoading ? (
-                <div className="h-72 flex items-center justify-center">
-                  <Skeleton className="h-4/5 w-full" />
-                </div>
-              ) : expenseByCategoryQuery.data?.length === 0 ? (
-                <div className="text-center py-10">
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No expense data</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    There is no expense data for the selected period.
-                  </p>
-                </div>
-              ) : (
-                <div className="h-96">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 20, right: 50, bottom: 20, left: 50 }}>
-                      <Pie
-                        data={formatCategoryData(expenseByCategoryQuery.data)}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={130}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {formatCategoryData(expenseByCategoryQuery.data).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={EXPENSE_COLORS[index % EXPENSE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        {/* Account Summary Tab */}
-        <TabsContent value="account-summary">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {accountsQuery.isLoading ? (
-                <div className="space-y-3">
-                  {[...Array(3)].map((_, index) => (
-                    <Skeleton key={index} className="h-20 w-full" />
-                  ))}
-                </div>
-              ) : accountsQuery.data?.length === 0 ? (
-                <div className="text-center py-10">
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No accounts found</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    You need to add accounts to see account summaries.
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Account</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Income</TableHead>
-                        <TableHead>Expenses</TableHead>
-                        <TableHead>Balance</TableHead>
-                        <TableHead className="text-right">Details</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {accountsQuery.data?.map((account: any) => (
-                        <TableRow 
-                          key={account.id} 
-                          className="cursor-pointer hover:bg-gray-50"
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
+                        <Legend wrapperStyle={{ paddingTop: 10 }} />
+                        <Bar dataKey="income" name="Income" fill="#10B981" />
+                        <Bar dataKey="expense" name="Expenses" fill="#EF4444" />
+                        <Bar dataKey="savings" name="Savings" fill="#3B82F6" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Income Categories Content */}
+          {activeTab === "income-categories" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Income by Category</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {incomeByCategoryQuery.isLoading ? (
+                  <div className="h-72 flex items-center justify-center">
+                    <Skeleton className="h-4/5 w-full" />
+                  </div>
+                ) : incomeByCategoryQuery.data?.length === 0 ? (
+                  <div className="text-center py-10">
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No income data</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      There is no income data for the selected period.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart margin={{ top: 20, right: 50, bottom: 20, left: 50 }}>
+                        <Pie
+                          data={formatCategoryData(incomeByCategoryQuery.data)}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={130}
+                          fill="#8884d8"
+                          dataKey="value"
                         >
-                          <TableCell className="font-medium">{account.name}</TableCell>
-                          <TableCell className="capitalize">{account.type}</TableCell>
-                          <TableCell className="text-green-600">
-                            {/* Show account income calculation here */}
-                            ${(account.income || 0).toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-red-500">
-                            {/* Show account expense calculation here */}
-                            ${(account.expense || 0).toFixed(2)}
-                          </TableCell>
-                          <TableCell className="font-semibold">
-                            ${account.balance.toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigateToAccountTransactions(account.id)}
-                            >
-                              View <ChevronRight className="ml-1 h-4 w-4" />
-                            </Button>
-                          </TableCell>
+                          {formatCategoryData(incomeByCategoryQuery.data).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={INCOME_COLORS[index % INCOME_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Expense Categories Content */}
+          {activeTab === "expense-categories" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Expenses by Category</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {expenseByCategoryQuery.isLoading ? (
+                  <div className="h-72 flex items-center justify-center">
+                    <Skeleton className="h-4/5 w-full" />
+                  </div>
+                ) : expenseByCategoryQuery.data?.length === 0 ? (
+                  <div className="text-center py-10">
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No expense data</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      There is no expense data for the selected period.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart margin={{ top: 20, right: 50, bottom: 20, left: 50 }}>
+                        <Pie
+                          data={formatCategoryData(expenseByCategoryQuery.data)}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={130}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {formatCategoryData(expenseByCategoryQuery.data).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={EXPENSE_COLORS[index % EXPENSE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Account Summary Tab Content */}
+          {activeTab === "account-summary" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {accountsQuery.isLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, index) => (
+                      <Skeleton key={index} className="h-20 w-full" />
+                    ))}
+                  </div>
+                ) : accountsQuery.data?.length === 0 ? (
+                  <div className="text-center py-10">
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No accounts found</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      You need to add accounts to see account summaries.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Account</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Income</TableHead>
+                          <TableHead>Expenses</TableHead>
+                          <TableHead>Balance</TableHead>
+                          <TableHead className="text-right">Details</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                      </TableHeader>
+                      <TableBody>
+                        {accountsQuery.data?.map((account: any) => (
+                          <TableRow 
+                            key={account.id} 
+                            className="cursor-pointer hover:bg-gray-50"
+                          >
+                            <TableCell className="font-medium">{account.name}</TableCell>
+                            <TableCell className="capitalize">{account.type}</TableCell>
+                            <TableCell className="text-green-600">
+                              ${(account.income || 0).toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-red-500">
+                              ${(account.expense || 0).toFixed(2)}
+                            </TableCell>
+                            <TableCell className="font-semibold">
+                              ${account.balance.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigateToAccountTransactions(account.id)}
+                              >
+                                View <ChevronRight className="ml-1 h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
