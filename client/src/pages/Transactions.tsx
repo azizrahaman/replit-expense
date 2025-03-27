@@ -70,12 +70,13 @@ export default function Transactions() {
   });
 
   // Handle category selection
-  const toggleCategory = (categoryId: string) => {
+  const toggleCategory = (categoryId: string, categoryType: 'income' | 'expense') => {
+    const uniqueId = `${categoryType}-${categoryId}`;
     setSelectedCategories(prev => {
-      if (prev.includes(categoryId)) {
-        return prev.filter(id => id !== categoryId);
+      if (prev.includes(uniqueId)) {
+        return prev.filter(id => id !== uniqueId);
       } else {
-        return [...prev, categoryId];
+        return [...prev, uniqueId];
       }
     });
     
@@ -96,8 +97,18 @@ export default function Transactions() {
       (transaction.account_id && transaction.account_id.toString() === accountFilter);
     
     // Check if transaction matches any of the selected categories
-    let matchesCategory = selectedCategories.length === 0 || 
-      (transaction.category_id && selectedCategories.includes(transaction.category_id.toString()));
+    let matchesCategory = selectedCategories.length === 0;
+    
+    if (!matchesCategory && transaction.category_id && transaction.type) {
+      // For income transactions, check if category matches any selected income category
+      if (transaction.type === 'income') {
+        matchesCategory = selectedCategories.includes(`income-${transaction.category_id}`);
+      } 
+      // For expense transactions, check if category matches any selected expense category
+      else if (transaction.type === 'expense') {
+        matchesCategory = selectedCategories.includes(`expense-${transaction.category_id}`);
+      }
+    }
     
     return matchesAccount && matchesCategory;
   }) || [];
@@ -181,11 +192,11 @@ export default function Transactions() {
                           Income Categories
                         </DropdownMenuLabel>
                         {incomeCategories?.map((category) => (
-                          <div key={category.id} className="flex items-center space-x-2 py-1 px-2">
+                          <div key={`income-${category.id}`} className="flex items-center space-x-2 py-1 px-2">
                             <Checkbox 
                               id={`income-category-${category.id}`}
-                              checked={selectedCategories.includes(category.id.toString())}
-                              onCheckedChange={() => toggleCategory(category.id.toString())}
+                              checked={selectedCategories.includes(`income-${category.id}`)}
+                              onCheckedChange={() => toggleCategory(category.id.toString(), 'income')}
                             />
                             <Label 
                               htmlFor={`income-category-${category.id}`}
@@ -202,11 +213,11 @@ export default function Transactions() {
                           Expense Categories
                         </DropdownMenuLabel>
                         {expenseCategories?.map((category) => (
-                          <div key={category.id} className="flex items-center space-x-2 py-1 px-2">
+                          <div key={`expense-${category.id}`} className="flex items-center space-x-2 py-1 px-2">
                             <Checkbox 
                               id={`expense-category-${category.id}`}
-                              checked={selectedCategories.includes(category.id.toString())}
-                              onCheckedChange={() => toggleCategory(category.id.toString())}
+                              checked={selectedCategories.includes(`expense-${category.id}`)}
+                              onCheckedChange={() => toggleCategory(category.id.toString(), 'expense')}
                             />
                             <Label 
                               htmlFor={`expense-category-${category.id}`}
