@@ -249,11 +249,11 @@ export default function Reports() {
         onValueChange={setActiveTab} 
         className="mb-6"
       >
-        <TabsList className="grid grid-cols-4 mb-4">
-          <TabsTrigger value="income-expense">Income vs Expenses</TabsTrigger>
-          <TabsTrigger value="income-categories">Income Breakdown</TabsTrigger>
-          <TabsTrigger value="expense-categories">Expense Breakdown</TabsTrigger>
-          <TabsTrigger value="account-summary">Account Summary</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 mb-4 overflow-x-auto">
+          <TabsTrigger value="income-expense" className="text-xs sm:text-sm md:text-base whitespace-nowrap px-1 sm:px-2 md:px-4">Income vs Expenses</TabsTrigger>
+          <TabsTrigger value="income-categories" className="text-xs sm:text-sm md:text-base whitespace-nowrap px-1 sm:px-2 md:px-4">Income Breakdown</TabsTrigger>
+          <TabsTrigger value="expense-categories" className="text-xs sm:text-sm md:text-base whitespace-nowrap px-1 sm:px-2 md:px-4">Expense Breakdown</TabsTrigger>
+          <TabsTrigger value="account-summary" className="text-xs sm:text-sm md:text-base whitespace-nowrap px-1 sm:px-2 md:px-4">Account Summary</TabsTrigger>
         </TabsList>
         
         <TabsContent value="income-expense">
