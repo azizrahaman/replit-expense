@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   format, 
@@ -65,6 +65,7 @@ export default function Transactions() {
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
   const itemsPerPage = 10;
+  const [totalAmount, setTotalAmount] = useState<number>(0);
   
   // Time period utility functions
   const getDateRange = () => {
@@ -178,6 +179,20 @@ export default function Transactions() {
     return matchesAccount && matchesCategory && matchesDate;
   }) || [];
 
+  // Calculate total amount whenever filtered transactions change
+  useEffect(() => {
+    // Calculate the sum of all filtered transactions
+    const sum = filteredTransactions.reduce((total: number, transaction: any) => {
+      // For expenses, we keep the amount negative; for income, it's positive
+      const amount = transaction.type === 'expense' 
+        ? -Math.abs(transaction.amount) 
+        : Math.abs(transaction.amount);
+      return total + amount;
+    }, 0);
+    
+    setTotalAmount(sum);
+  }, [filteredTransactions]);
+  
   // Calculate pagination
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -197,12 +212,6 @@ export default function Transactions() {
       <div className="md:flex md:items-center md:justify-between mb-6">
         <div className="flex-1 min-w-0">
           <h2 className="text-2xl font-bold text-gray-800">Transactions</h2>
-        </div>
-        <div className="mt-4 flex md:mt-0 md:ml-4">
-          <Button onClick={() => setIsAddTransactionModalOpen(true)}>
-            <Plus className="mr-2 h-5 w-5" />
-            Add Transaction
-          </Button>
         </div>
       </div>
 
@@ -385,13 +394,29 @@ export default function Transactions() {
             </div>
           ) : isMobile ? (
             // Mobile view - list of transaction items
-            paginatedTransactions.map((transaction: any) => (
-              <TransactionItem
-                key={transaction.id}
-                transaction={transaction}
-                isMobile={true}
-              />
-            ))
+            <>
+              {paginatedTransactions.map((transaction: any) => (
+                <TransactionItem
+                  key={transaction.id}
+                  transaction={transaction}
+                  isMobile={true}
+                />
+              ))}
+              
+              {/* Mobile summary row */}
+              {filteredTransactions.length > 0 && (
+                <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-md shadow-sm">
+                  <div className="flex justify-between items-center">
+                    <div className="font-medium text-gray-700">
+                      Summary of {filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? 's' : ''}:
+                    </div>
+                    <div className={`font-bold text-lg ${totalAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {totalAmount >= 0 ? '+' : ''}{totalAmount.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             // Desktop view - transactions table
             <div className="overflow-x-auto">
@@ -425,6 +450,26 @@ export default function Transactions() {
                       transaction={transaction}
                     />
                   ))}
+                  
+                  {/* Summary row */}
+                  {filteredTransactions.length > 0 && (
+                    <tr className="border-t-2 border-gray-300 font-medium">
+                      <td colSpan={3} className="px-6 py-4 text-right text-sm text-gray-700">
+                        Summary of {filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? 's' : ''}:
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                        {/* This cell is empty, aligns with Account column */}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium">
+                        <span className={`${totalAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {totalAmount >= 0 ? '+' : ''}{totalAmount.toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {/* This cell is empty, aligns with Actions column */}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
